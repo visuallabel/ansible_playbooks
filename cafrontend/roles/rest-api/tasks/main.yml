@@ -1,0 +1,62 @@
+---
+#This playbook prepares apache tomcat webapp
+#Sources should already be checked on role code-repository, so skip check out and continue to local build
+
+- name: Empty build path
+  local_action: command /usr/bin/ant -buildfile "{{ tomcat_app_build_path }}"/build.xml -quiet clean 
+  tags: 
+    - build
+    - deploy
+  
+- name: Execute CAFrontEnd Ant script
+  local_action: command /usr/bin/ant -Dtomcat.home="{{ tomcat_home }}" -Dapp.name="{{ tomcat_app_name }}" -buildfile "{{ tomcat_app_build_path }}"/build.xml -quiet package 
+  tags: 
+    - build
+    - deploy
+    
+- name: Stop Tomcat before deploy
+  sudo: true
+  service:
+    name: tomcat
+    state: stopped
+    enabled: yes
+  register: running
+  tags:
+    - deploy
+
+- name: Pausing to make sure Tomcat is stopped before deleting files
+  pause:
+    seconds: 5
+  when: running.changed
+  tags:
+    - deploy
+
+- name: Delete the old webapp
+  sudo: true
+  file:
+    path: "{{ tomcat_home }}/webapps/{{ item }}"
+    state: absent
+  with_items:
+    - "{{ tomcat_app_name }}.war"
+    - "{{ tomcat_app_name }}"
+  tags:
+    - deploy
+    
+- name: Deploy CAFrontEnd
+  sudo: true
+  copy:
+    src: "{{ tomcat_app_build_path }}/build/{{ tomcat_app_name }}.war"
+    dest: "{{ tomcat_home }}/webapps/"
+    group: "{{ tomcat_user }}"
+    owner: "{{ tomcat_user }}"
+  tags: 
+    - deploy
+    
+- name: Start Tomcat after deploy
+  sudo: true
+  service:
+    name: tomcat
+    state: started
+    enabled: yes
+  tags:
+    - deploy

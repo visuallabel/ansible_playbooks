@@ -1,0 +1,45 @@
+---
+#This playbook prepares apache tomcat servlet container
+- name: Create temporary working directory
+  file:
+    path: "/tmp/apache-tomcat"
+    state: directory
+
+- name: Download Tomcat binary
+  get_url:
+    url: "{{ tomcat_mirror }}"
+    dest: /tmp/apache-tomcat/tomcat.tar.gz
+
+- name: Unarchive Tomcat binary to installation path
+  sudo: true
+  unarchive:
+    src: /tmp/apache-tomcat/tomcat.tar.gz
+    dest: "{{ install_path }}"
+    copy: no
+    
+- name: Change file permissions of Tomcat files
+  sudo: true
+  file:
+    path: "{{ install_path }}/{{ tomcat_version }}"
+    recurse: true
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_user }}"
+    
+- name: Generate symbolic link
+  sudo: true
+  file:
+    path: "{{ install_path }}/apache-tomcat"
+    src: "{{ tomcat_version }}"
+    state: link
+    force: no
+
+- name: Clean up the webapp directory
+  sudo: true
+  file:
+    path: "{{ install_path }}/apache-tomcat/webapps/{{ item }}"
+    state: absent
+  with_items:
+    - docs
+    - examples
+    - host-manager
+    - ROOT

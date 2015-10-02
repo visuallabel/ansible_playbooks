@@ -1,0 +1,9 @@
+---
+# Configure and deploy databases
+- hosts: databases
+  user: "{{ user_name }}"
+  vars_files:
+   - group_vars/secrets.yml
+  roles:
+    - solr
+    - mysql

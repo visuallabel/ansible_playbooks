@@ -1,0 +1,20 @@
+---
+#This playbook prepares source code structure
+
+#Locally check out sources
+- name: Check out latest sources
+  local_action:
+    module: git
+    repo: "{{ frontend_repo }}"
+    dest: "{{ tomcat_app_build_path }}"
+    version: "{{ frontend_branch }}"
+    accept_hostkey: true
+  tags:
+    - build
+    - deploy
+
+#Include these tasks to configure confidential data
+- include: init_confidential.yml
+  tags:
+    - build
+    - deploy

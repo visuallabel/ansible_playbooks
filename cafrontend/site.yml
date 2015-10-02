@@ -1,0 +1,6 @@
+---
+#This playbook deploys CAFrontEnd
+- include: initial-tasks.yml
+- include: databases.yml
+- include: services.yml
+- include: cafrontend.yml

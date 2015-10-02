@@ -1,0 +1,39 @@
+---
+#This playbook prepares apache tomcat servlet container
+
+- name: Prepare user for tomcat
+  sudo: true
+  user:
+    name: "{{ tomcat_user }}"
+
+- name: Install Tomcat dependencies
+  sudo: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openjdk-8-jre
+
+- name: Test if Tomcat is already available, download binaries if not
+  stat:
+    path: "{{ tomcat_home }}"
+  register: tomcat_installed
+
+  #Tasks to be included when Tomcat is not found
+- include: init_tomcat.yml
+  when: tomcat_installed.stat.exists == false
+
+- name: Update Tomcat startup script
+  sudo: true
+  copy:
+    src: tomcat
+    dest: /etc/init.d/tomcat
+    mode: 0755
+
+- name: Enable Tomcat service
+  sudo: true
+  service:
+    name: tomcat
+    enabled: yes
+    state: stopped
+    #tomcat will be started later on

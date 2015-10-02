@@ -1,0 +1,42 @@
+---
+#This role deploys HTML demo pages on CAFrontEnd
+- name: Install httpd/apache2 server
+  sudo: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apache2
+
+- name: Make sure frontend_html_path is available
+  sudo: true
+  file: 
+    path: "{{ frontend_html_path }}"
+    state: directory
+    group: "{{ user_name }}"
+    owner: "{{ user_name }}"
+    recurse: yes
+
+- name: Check out frontend_html sources
+  git:
+    repo: "{{ frontend_html_repo }}"
+    dest: "{{ frontend_html_path }}"
+    version: "{{ frontend_html_branch }}"
+    accept_hostkey: true
+    
+- name: Chown files back to the frontend user
+  sudo: true
+  file: 
+    path: "{{ frontend_html_path }}"
+    state: directory
+    group: "{{ httpd_user }}"
+    owner: "{{ httpd_user }}"
+    recurse: yes
+
+- name: Create symbolic link to newly unarchived location
+  sudo: true
+  file:
+    path: "{{ httpd_home }}/web"
+    src: "{{ frontend_html_path }}"
+    state: link
+    force: no

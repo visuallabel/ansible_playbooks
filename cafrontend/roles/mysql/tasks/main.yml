@@ -1,0 +1,59 @@
+---
+#This playbook prepares mysql database server
+
+- name: Install MySQL
+  sudo: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mysql-server
+    - python-mysqldb
+
+- name: Make sure MySQL DB exists
+  mysql_db:
+    name: "{{ mysql_database }}"
+    state: present
+    login_user: "{{ mysql_login_user }}"
+    login_password: "{{ mysql_pass }}"
+  register: dbState
+
+- name: Create DB user
+  mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_pass }}"
+    priv: "{{ mysql_database }}.*:ALL"
+    state: present
+    login_user: "{{ mysql_login_user }}"
+    login_password: "{{ mysql_pass }}"
+
+#copy sql files from a locally created git clone
+- name: Copy initial DB files
+  copy: 
+    src: "{{ tomcat_app_build_path }}/db_scripts/sql/ca_initial.sql"
+    dest: /tmp
+  when: dbState.changed == true and dbState.db == "{{ mysql_database }}"
+  
+- name: Copy initial DB files
+  copy: 
+    src: "{{ tomcat_app_build_path }}/db_scripts/sql/db_initial.sql"
+    dest: /tmp
+  when: dbState.changed == true and dbState.db == "{{ mysql_database }}"
+    
+- name: Import initial database structure (only if database was just created)
+  mysql_db: 
+    name: "{{ mysql_database }}"
+    state: import
+    target: /tmp/ca_initial.sql
+    login_user: "{{ mysql_login_user }}"
+    login_password: "{{ mysql_pass }}"
+  when: dbState.changed == true and dbState.db == "{{ mysql_database }}"
+    
+- name: Import initial database structure (only if database was just created)
+  mysql_db: 
+    name: "{{ mysql_database }}"
+    state: import
+    target: /tmp/db_initial.sql
+    login_user: "{{ mysql_login_user }}"
+    login_password: "{{ mysql_pass }}"
+  when: dbState.changed == true and dbState.db == "{{ mysql_database }}"

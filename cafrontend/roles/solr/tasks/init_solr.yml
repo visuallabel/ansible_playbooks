@@ -1,0 +1,73 @@
+---
+#This playbook prepares apache solr
+- name: Create temporary working directory
+  file:
+    path: "/tmp/apache-solr"
+    state: directory
+
+- name: Download Solr binary
+  get_url:
+    url: "{{ solr_mirror }}"
+    dest: /tmp/apache-solr/solr.tar.gz
+
+- name: Unarchive Solr binary
+  sudo: true
+  unarchive:
+    src: /tmp/apache-solr/solr.tar.gz
+    dest: "{{ install_path }}"
+    copy: no
+
+- name: Change file permissions of Solr files
+  sudo: true
+  file:
+    path: "{{ install_path }}/{{ solr_version }}"
+    recurse: true
+    owner: "{{ solr_user }}"
+    group: "{{ solr_user }}"
+    
+- name: Generate symbolic link
+  sudo: true
+  file:
+    path: "{{ solr_home }}"
+    src: "{{ solr_version }}"
+    state: link
+    force: no
+
+- name: Modify Solr startup script, SOLR_INSTALL_DIR (1/3)
+  sudo: true
+  lineinfile:
+    state: present
+    dest: "{{ solr_home }}/bin/init.d/solr"
+    regexp: "^SOLR_INSTALL_DIR="
+    line: "SOLR_INSTALL_DIR={{ solr_home }}"
+
+- name: Modify Solr startup script, RUNAS (2/3)
+  sudo: true
+  lineinfile:
+    state: present
+    dest: "{{ solr_home }}/bin/init.d/solr"
+    regexp: "^RUNAS="
+    line: "RUNAS={{ solr_user }}"
+
+- name: Modify Solr startup script, SOLR_ENV (3/3)
+  sudo: true
+  lineinfile:
+    state: present
+    dest: "{{ solr_home }}/bin/init.d/solr"
+    regexp: "^SOLR_ENV="
+    line: "SOLR_ENV={{ solr_home }}/bin/solr.in.sh"
+
+- name: Modify Solr environment file
+  sudo: true
+  lineinfile:
+    state: present
+    dest: "{{ solr_home }}/bin/solr.in.sh"
+    regexp: "^SOLR_HOME="
+    line: "SOLR_HOME={{ solr_core_path }}"
+
+- name: Deploy Solr startup script
+  sudo: true
+  copy:
+    src: "{{ solr_home }}/bin/init.d/solr"
+    dest: /etc/init.d/solr
+    mode: 0755

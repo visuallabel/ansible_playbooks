@@ -1,0 +1,42 @@
+---
+#This playbook prepares apache web server
+- name: Install httpd/apache2 server
+  sudo: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apache2
+    - libapache2-mod-jk
+
+- name: Disable Apache module
+  sudo: true
+  apache2_module:
+    state: absent
+    name: "{{ item }}"
+  with_items:
+    - autoindex
+  notify:
+    restart apache
+
+- name: Enable Apache modules
+  sudo: true
+  apache2_module:
+    state: present
+    name: "{{ item }}"
+  with_items:
+    - jk
+  notify:
+    restart apache
+
+- name: Modify mod-jk config
+  sudo: true
+  lineinfile:
+    state: present
+    dest: /etc/apache2/sites-available/000-default.conf
+    regexp: 'JkMount'
+    line: '\tJkMount /CAFrontEnd* ajp13_worker'
+    insertbefore: ^</VirtualHost>
+  notify:
+    restart apache
+

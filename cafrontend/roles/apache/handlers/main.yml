@@ -1,0 +1,8 @@
+---
+#File for handler declarations
+
+- name: restart apache
+  sudo: true
+  service:
+    name: apache2
+    state: restarted

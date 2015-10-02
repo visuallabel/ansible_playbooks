@@ -1,0 +1,8 @@
+---
+#File for handler declarations
+
+- name: restart tomcat
+  sudo: true
+  service:
+    name: tomcat
+    state: restarted

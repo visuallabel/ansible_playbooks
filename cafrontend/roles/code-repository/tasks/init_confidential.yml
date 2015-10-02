@@ -1,0 +1,6 @@
+---
+#This playbook prepares confidential data
+#For example, this can be used to overwrite public repository configuration and property files
+#with files from your own private repository
+
+#this file is now empty, you may add your own tasks here

@@ -1,0 +1,49 @@
+---
+#This playbook prepares apache solr server
+- name: Prepare user for Solr
+  sudo: true
+  user:
+    name: "{{ solr_user }}"
+    
+- name: Install Apache Solr dependencies
+  sudo: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - openjdk-8-jre
+ 
+- name: Test if Solr is already available, download binaries if not
+  stat:
+    path: "{{ solr_home }}"
+  register: solr_installed
+
+  #Tasks to be included when Solr is not found
+- include: init_solr.yml
+  when: solr_installed.stat.exists == false
+    
+- name: Setup Solr core path
+  sudo: true
+  file:
+    path: "{{ solr_core_path }}"
+    state: directory
+    owner: "{{ solr_user }}"
+    group: "{{ solr_user }}"
+
+#copy files from a locally created git clone
+- name: Update Solr Cores
+  sudo: true
+  copy:
+    src: "{{ tomcat_app_build_path }}/db_scripts/solr/"
+    dest: "{{ solr_core_path }}"
+    mode: 0644
+    owner: "{{ solr_user }}"
+    group: "{{ solr_user }}"
+   
+- name: Enable, and restart Solr service
+  sudo: true
+  service:
+    name: solr
+    enabled: yes
+    state: restarted
+    sleep: 1

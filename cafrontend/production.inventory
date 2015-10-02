@@ -1,0 +1,8 @@
+#Web services (tomcat, apache etc.)
+[cafrontend]
+127.0.0.1
+
+#MySQL, Solr and friends
+[databases]
+127.0.0.1
+

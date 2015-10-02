@@ -1,0 +1,11 @@
+---
+#This playbook deploys Tomcat and other services on CAFrontEnd/Target machine
+    
+# Configure and deploy web services
+- hosts: cafrontend
+  user: "{{ user_name }}"
+  vars_files:
+   - group_vars/secrets.yml
+  roles:
+    - apache
+    - tomcat

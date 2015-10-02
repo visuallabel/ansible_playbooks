@@ -1,0 +1,8 @@
+---
+#This playbook check outs the code and setups it ready for build and deploy
+- hosts: cafrontend
+  user: "{{ user_name }}"
+  vars_files:
+   - group_vars/secrets.yml
+  roles:
+    - code-repository
